@@ -1,0 +1,35 @@
+# Carga diária da Bronze: API do Recadastramento -> anonimização -> Supabase.
+# Os logs são públicos: o script imprime só contagens. Segredos ficam em Settings > Secrets > Actions.
+name: Carga diária da Bronze
+
+on:
+  schedule:
+    - cron: "0 3 * * *"  # 23h em Cuiabá (UTC-4)
+  workflow_dispatch:      # botão "Run workflow" para rodar manualmente
+
+permissions:
+  contents: read
+
+concurrency:
+  group: carga-bronze
+  cancel-in-progress: false
+
+jobs:
+  carga:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r ingestao/requirements.txt
+      - name: Testes da anonimização
+        run: python -m unittest discover -s ingestao
+      - name: Carga
+        run: python ingestao/carregar_bronze.py
+        env:
+          RECADASTRAMENTO_API_URL: ${{ secrets.RECADASTRAMENTO_API_URL }}
+          RECADASTRAMENTO_API_TOKEN: ${{ secrets.RECADASTRAMENTO_API_TOKEN }}
+          CHAVE_ANONIMIZACAO: ${{ secrets.CHAVE_ANONIMIZACAO }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

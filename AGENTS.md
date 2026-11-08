@@ -23,19 +23,25 @@ Valem durante toda a tarefa, não só na análise inicial. Se várias se aplicar
 
 ## 3. LGPD (inegociável)
 
-- Anonimizar já na carga da Bronze: remover nome, CPF e matrícula; substituir o identificador por um código sem relação com a pessoa.
-- Manter apenas: DRE, município, tipo de lotação, vínculo, função e situação.
-- O repositório é público: só scripts e dados agregados ou de exemplo. **Nunca** versionar a base real nem dados individuais.
+- Anonimizar em memória, antes de gravar na Bronze: nome, matrícula e número do vínculo nunca chegam ao banco.
+- Identificador: `id_servidor = HMAC-SHA256(CHAVE_ANONIMIZACAO, matrícula|vínculo)`. Estável entre os dias e irreversível sem a chave (pseudonimização). A chave fica só nos Secrets, nunca no repositório.
+- Manter apenas: DRE, município, lotação (escola), tipo de lotação, função, tipo de vínculo e situação.
+- Painéis mostram só contagens, nunca linhas individuais.
+- O repositório é público: só scripts e dados agregados ou de exemplo. **Nunca** versionar a base real nem dados individuais. Scripts que rodam no GitHub Actions imprimem só contagens (os logs são públicos).
 
 ## 4. Decisões aprovadas
 
 Não contrarie sem aprovação do usuário.
 
 - Escopo: só o agregado — mapa de MT por município (% concluído, aguardando validação, em andamento, não iniciado), situação por DRE, tipo de vínculo, tipo de lotação e funções. Nada individual.
-- Arquitetura Medallion em PostgreSQL, com schemas `bronze`, `silver` e `gold`.
-- ETL Bronze → Silver com Power Query, incluindo qualidade de dados; nomes de município padronizados para bater com o mapa.
-- Star Schema na Gold: `fato_recadastramento` (1 linha por servidor anonimizado por data de leitura) + `dim_municipio`, `dim_dre`, `dim_lotacao`, `dim_vinculo`, `dim_funcao`, `dim_situacao`, `dim_tempo`.
-- Histórico: snapshot diário da base, alimentando `dim_tempo`, a inteligência de tempo em DAX e o painel estratégico.
+- Fonte: API do Apps Script da planilha do Recadastramento (URL + token). Só o GitHub Actions chama a API, 1×/dia, e grava no Supabase (PostgreSQL), a **única base oficial**. Código local e Power BI apenas leem do Supabase, com usuário somente leitura.
+- Arquitetura Medallion:
+  - **Bronze** (Postgres, schema `bronze`): `carga` guarda a leitura anonimizada dos últimos 7 dias; `historico` guarda o histórico em SCD Tipo 2 (só mudanças, com `valido_de`/`valido_ate`); views SQL de extração.
+  - **Silver** (Power Query): limpeza, padronização, qualidade de dados e nomes de município batendo com o mapa.
+  - **Gold** (modelo do Power BI): Star Schema.
+- Star Schema: `fato_recadastramento` (1 linha por servidor anonimizado por dia, gerada pela view que expande o SCD2) + `dim_municipio`, `dim_dre`, `dim_lotacao`, `dim_vinculo`, `dim_funcao`, `dim_situacao`, `dim_tempo`.
+- Uma carga por dia: se o dia já foi carregado, a carga não faz nada. Dia sem carga não abre buraco: o estado vale até a próxima mudança.
+- Power BI em formato Power BI Project (`.pbip`), versionado como texto, sem credenciais.
 - Power BI com três painéis: operacional (situação por escola/lotação), gerencial (mapa + DRE/município) e estratégico (% geral, evolução diária e projeção da meta).
 - Mineração de dados (KDD/CRISP-DM): clusterizar municípios pelo perfil de adesão ou classificar quem tende a ficar "não iniciado".
 

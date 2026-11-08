@@ -1,0 +1,18 @@
+# Segredos
+.env
+.env.*
+!.env.example
+
+# Dados reais nunca vão para o repositório (LGPD); só dados de exemplo/referência
+*.csv
+*.xlsx
+!dados/exemplo/**/*.csv
+!dados/referencia/**/*.csv
+
+# Power BI: credenciais e cache locais
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# Python
+__pycache__/
+.venv/
