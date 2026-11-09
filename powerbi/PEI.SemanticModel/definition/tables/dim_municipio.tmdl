@@ -20,6 +20,12 @@ table dim_municipio
 		summarizeBy: none
 		sourceColumn: sk_municipio
 
+	/// Perfil de adesao do municipio, resultado da clusterizacao K-means (ver docs/mineracao.md).
+	column perfil_adesao
+		dataType: string
+		lineageTag: 29a77906-c104-4435-9397-d701fd634389
+		sourceColumn: perfil_adesao
+
 	partition dim_municipio = m
 		mode: import
 		queryGroup: Gold
@@ -27,7 +33,12 @@ table dim_municipio
 				let
 				    Municipios = Table.SelectColumns(municipios_mt_ibge, {"codigo_ibge", "municipio_oficial"}),
 				    Ordenado = Table.Sort(Municipios, {{"municipio_oficial", Order.Ascending}}),
-				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_municipio", 1, 1, Int64.Type)
+				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_municipio", 1, 1, Int64.Type),
+				    // perfil de adesao (clusterizacao K-means): atributo do municipio, sem tabela nem relacionamento novo
+				    Perfis = Table.Buffer(perfil_municipio),
+				    CasamentoPerfil = Table.NestedJoin(ChaveSubstituta, {"codigo_ibge"}, Perfis, {"codigo_ibge"}, "p", JoinKind.LeftOuter),
+				    PerfilAdesao = Table.ExpandTableColumn(CasamentoPerfil, "p", {"perfil"}, {"perfil_adesao"}),
+				    Tipos = Table.TransformColumnTypes(PerfilAdesao, {{"perfil_adesao", type text}})
 				in
-				    ChaveSubstituta
+				    Tipos
 

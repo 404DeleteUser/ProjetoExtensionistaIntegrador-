@@ -299,6 +299,41 @@ table _Medidas
 		displayFolder: Exibição
 		lineageTag: f9afb9f3-c0d4-4974-8a14-246cb9be184e
 
+	/// Número de municípios com servidores no último dia com dados do período.
+	measure Municípios =
+			VAR UltimaData = [Última data]
+			RETURN
+			    CALCULATE ( DISTINCTCOUNT ( fato_recadastramento[sk_municipio] ), fato_recadastramento[data] = UltimaData )
+		formatString: #,##0
+		displayFolder: Perfis
+		lineageTag: 15d056e0-390e-45af-837a-b27f03c4569c
+
+	/// Servidores com vínculo TEMPORÁRIO ÷ Servidores. Ponderado por servidor: num grupo de municípios, os maiores pesam mais. O relatório de mineração (docs/mineracao.md) usa a média simples entre municípios, por isso os valores podem diferir.
+	measure '% Temporários' = DIVIDE ( CALCULATE ( [Servidores], KEEPFILTERS ( dim_vinculo[tipo_vinculo] = "TEMPORÁRIO" ) ) + 0, [Servidores] )
+		formatString: 0.0%
+		displayFolder: Perfis
+		lineageTag: 9f1b9e79-1cc2-4b20-a499-0b4a86aec1b0
+
+	/// Servidores lotados em ESCOLA CAMPO ou ESCOLA INDÍGENA ÷ Servidores. Ponderado por servidor: num grupo de municípios, os maiores pesam mais. O relatório de mineração (docs/mineracao.md) usa a média simples entre municípios, por isso os valores podem diferir.
+	measure '% Campo e indígena' = DIVIDE ( CALCULATE ( [Servidores], KEEPFILTERS ( dim_lotacao[tipo_lotacao] IN { "ESCOLA CAMPO", "ESCOLA INDÍGENA" } ) ) + 0, [Servidores] )
+		formatString: 0.0%
+		displayFolder: Perfis
+		lineageTag: 5a3c6a85-6e0d-4fd6-8d8f-72457a72b3cb
+
+	/// Cor hexadecimal fixa de cada perfil de adesão, usada no mapa de perfis (formatação por valor do campo). Cores categóricas distintas das cores das situações e dos azuis do mapa de faixas.
+	measure 'Cor do perfil' =
+			SWITCH (
+			    SELECTEDVALUE ( dim_municipio[perfil_adesao] ),
+			    "Avançados", "#0FA3B1",
+			    "Travados na validação", "#C1121F",
+			    "Campo e indígena", "#F28C28",
+			    "Polos regionais", "#7B2CBF",
+			    "Parados", "#3D3D3D",
+			    "Em andamento", "#E056A0"
+			)
+		displayFolder: Perfis
+		lineageTag: b6ab28da-8415-42ab-b4fc-9b05e0ac4965
+
 	column _
 		isHidden
 		lineageTag: 1dc179bd-3242-452b-9eda-27363176ef9c

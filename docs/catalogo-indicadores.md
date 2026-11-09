@@ -48,6 +48,13 @@ Liga cada pergunta de negócio da SEDUC-MT sobre o Recadastramento ao indicador 
 
 Os indicadores E5 a E9 dependem de pelo menos 2 dias de carga. Sem isso, os cartões mostram "Sem histórico".
 
+## Perfis de adesão (mineração de dados)
+
+| Nº | Pergunta de negócio | Indicador (medida) | Fórmula | Fonte | Visual |
+|---|---|---|---|---|---|
+| P1 | Que tipos de atraso existem entre os municípios? | Perfil de adesão do município | K-means sobre o perfil de cada município (ver `docs/mineracao.md`) | bronze.municipio_perfil → dim_municipio | Mapa por perfil |
+| P2 | Como é cada perfil? | Municípios, Servidores, % por situação, % Temporários, % Campo e indígena (Perfis) | As medidas de situação, mais vínculo temporário ÷ Servidores e lotação do campo ou indígena ÷ Servidores | + dim_vinculo, dim_lotacao | Matriz por perfil |
+
 ## Controle de qualidade
 
 | Nº | Pergunta | Indicador | Fórmula | Esperado |

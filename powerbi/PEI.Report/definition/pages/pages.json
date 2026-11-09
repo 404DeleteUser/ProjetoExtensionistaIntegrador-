@@ -3,7 +3,8 @@
   "pageOrder": [
     "gerencial",
     "operacional",
-    "estrategico"
+    "estrategico",
+    "perfis"
   ],
-  "activePageName": "operacional"
+  "activePageName": "perfis"
 }

@@ -85,3 +85,22 @@ expression correcoes_municipio =
 	lineageTag: 9f71e30e-5120-4fe5-873a-9dbb79957b0e
 	queryGroup: Silver
 
+/// Perfil de adesao de cada municipio (resultado da clusterizacao K-means gravado em bronze.municipio_perfil), com o nome padronizado pela mesma regra da Silver e casado com o codigo IBGE.
+expression perfil_municipio =
+		let
+		    Fonte = PostgreSQL.Database(ServidorSupabase, BancoSupabase),
+		    // Table.Buffer: le a tabela uma vez e impede a traducao dos passos seguintes para SQL (query folding)
+		    Dados = Table.Buffer(Fonte{[Schema = "bronze", Item = "municipio_perfil"]}[Data]),
+		    Colunas = Table.SelectColumns(Dados, {"municipio", "perfil"}),
+		    Padronizado = Table.TransformColumns(Colunas, {{"municipio", fn_padronizar, type nullable text}}),
+		    CorrecoesMunicipio = Table.TransformColumns(Padronizado, {{"municipio", each Record.FieldOrDefault(correcoes_municipio, _, _), type text}}),
+		    ChaveMunicipio = Table.AddColumn(CorrecoesMunicipio, "municipio_chave", each fn_chave([municipio]), type text),
+		    CasamentoIBGE = Table.NestedJoin(ChaveMunicipio, {"municipio_chave"}, municipios_mt_ibge, {"municipio_chave"}, "ibge", JoinKind.LeftOuter),
+		    CodigoIBGE = Table.ExpandTableColumn(CasamentoIBGE, "ibge", {"codigo_ibge"}),
+		    Final = Table.SelectColumns(CodigoIBGE, {"codigo_ibge", "perfil"}),
+		    Tipos = Table.TransformColumnTypes(Final, {{"codigo_ibge", type text}, {"perfil", type text}})
+		in
+		    Tipos
+	lineageTag: cd610020-55a5-4299-89c4-fde4fe234fe4
+	queryGroup: Silver
+
