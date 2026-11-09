@@ -103,5 +103,5 @@ docs/                                documentação técnica
 
 Este projeto usou IA generativa como **ferramenta auxiliar**: **Claude** (Anthropic), por meio do Claude Code e do Claude Desktop com o Power BI Modeling MCP.
 
-- **Onde ajudou:** na escrita de código Python, SQL, Power Query (M) e DAX, na montagem do relatório do Power BI e na redação desta documentação.
+- **Onde ajudou:** na revisão do código Python, SQL, Power Query (M) e DAX, auxiliando na montagem do relatório do Power BI e na redação desta documentação.
 - **Responsabilidade do aluno:** as decisões de escopo, de modelagem e de layout, a validação dos resultados com os dados e a revisão de todo o conteúdo.
