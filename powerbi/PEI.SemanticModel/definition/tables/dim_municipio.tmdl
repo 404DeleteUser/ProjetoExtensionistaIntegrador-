@@ -1,0 +1,33 @@
+/// Dimensao municipio: 1 linha por codigo IBGE (142 de MT), com o nome oficial. Sem DRE: a DRE e atributo da lotacao, nao do municipio.
+table dim_municipio
+	lineageTag: 67a0ca00-d3b4-4d98-a195-e51ccd5fbbf6
+
+	column codigo_ibge
+		dataType: string
+		lineageTag: cf37141b-e09a-4c19-b711-ce433bc71100
+		sourceColumn: codigo_ibge
+
+	column municipio_oficial
+		dataType: string
+		lineageTag: 9a98668b-6c42-4765-94c2-97411f141e77
+		dataCategory: City
+		sourceColumn: municipio_oficial
+
+	column sk_municipio
+		dataType: int64
+		isHidden
+		lineageTag: eff9b5cb-c22a-4e27-8851-7ca35a8a91a3
+		summarizeBy: none
+		sourceColumn: sk_municipio
+
+	partition dim_municipio = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Municipios = Table.SelectColumns(municipios_mt_ibge, {"codigo_ibge", "municipio_oficial"}),
+				    Ordenado = Table.Sort(Municipios, {{"municipio_oficial", Order.Ascending}}),
+				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_municipio", 1, 1, Int64.Type)
+				in
+				    ChaveSubstituta
+

@@ -6,6 +6,7 @@
 # Dados reais nunca vão para o repositório (LGPD); só dados de exemplo/referência
 *.csv
 *.xlsx
+*.docx
 !dados/exemplo/**/*.csv
 !dados/referencia/**/*.csv
 

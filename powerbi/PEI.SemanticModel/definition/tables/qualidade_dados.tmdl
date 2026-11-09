@@ -1,0 +1,62 @@
+/// Evidencia de qualidade de dados: cada regra da Silver e quantas linhas ela corrigiu, rejeitou ou verificou.
+table qualidade_dados
+	isHidden
+	lineageTag: ca0a5a7b-25a3-40a5-af76-1ff4040fef73
+
+	column regra
+		dataType: string
+		lineageTag: 55024df5-9e74-4833-92bd-0bc4408b99ad
+		sourceColumn: regra
+
+	column coluna
+		dataType: string
+		lineageTag: 257e4d15-8b3f-4136-a99a-a178b6573087
+		sourceColumn: coluna
+
+	column acao
+		dataType: string
+		lineageTag: aad8862d-0991-4477-bbc2-14164288851d
+		sourceColumn: acao
+
+	column linhas
+		dataType: int64
+		lineageTag: 77d79437-81e4-4c92-bb6e-b70b893738ee
+		sourceColumn: linhas
+
+	column ordem
+		dataType: int64
+		lineageTag: 6c2b9038-ab87-42c0-859b-7970f80b840e
+		sourceColumn: ordem
+
+	partition qualidade_dados = m
+		mode: import
+		queryGroup: Silver
+		source =
+				let
+				    Bronze = Table.Buffer(bronze_snapshot_diario),
+				    Silver = Table.Buffer(silver_snapshot),
+				    Contar = (Tabela as table, Condicao as function) as number => Table.RowCount(Table.SelectRows(Tabela, Condicao)),
+				    ColunasTexto = {"dre", "municipio", "lotacao", "tipo_lotacao", "funcao", "tipo_vinculo"},
+				    Oficiais = {"Concluído", "Aguardando validação", "Em andamento", "Não iniciado"},
+				    UltimaData = List.Max(Silver[data]),
+				    TextoPadronizado = List.Transform(ColunasTexto, (Coluna) => {"Texto padronizado (espaços e maiúsculas)", Coluna, "Corrigida", Contar(Bronze, each let Original = Record.Field(_, Coluna), Novo = fn_padronizar(Original) in Novo <> null and Novo <> Original)}),
+				    VazioNaoInformado = List.Transform(ColunasTexto & {"situacao"}, (Coluna) => {"Vazio vira Não informado", Coluna, "Corrigida", Contar(Bronze, each fn_padronizar(Record.Field(_, Coluna)) = null)}),
+				    SituacaoForaDoPadrao = Contar(Silver, each not List.Contains(Oficiais & {"Não informado"}, [situacao])),
+				    SituacaoConvertida = Contar(Bronze, each fn_padronizar([situacao]) <> null and not List.Contains(Oficiais, [situacao])) - SituacaoForaDoPadrao,
+				    Regras = TextoPadronizado & VazioNaoInformado & {
+				        {"Situação convertida para o nome oficial", "situacao", "Corrigida", SituacaoConvertida},
+				        {"Situação fora dos 4 nomes oficiais", "situacao", "Rejeitada (revisar)", SituacaoForaDoPadrao},
+				        {"Município corrigido pelo de-para (correcoes_municipio)", "municipio", "Corrigida", Contar(Bronze, each Record.HasFields(correcoes_municipio, {fn_padronizar([municipio]) ?? ""}))},
+				        {"Município sem código IBGE (ver municipio_de_para)", "municipio", "Rejeitada (revisar)", Contar(Silver, each [codigo_ibge] = null)},
+				        {"Municípios de MT lidos do IBGE", "municipios_mt_ibge", "Verificação", Table.RowCount(municipios_mt_ibge)},
+				        {"Linhas lidas da Bronze (todos os dias)", "vw_snapshot_diario", "Verificação", Table.RowCount(Bronze)},
+				        {"Linhas na Silver (todos os dias)", "silver_snapshot", "Verificação", Table.RowCount(Silver)},
+				        {"Linhas no último dia", "data", "Verificação", Contar(Silver, each [data] = UltimaData)}
+				    },
+				    Tabela = #table(type table [regra = text, coluna = text, acao = text, linhas = Int64.Type], Regras),
+				    ComOrdem = Table.AddIndexColumn(Tabela, "ordem", 1, 1, Int64.Type)
+				in
+				    ComOrdem
+
+	annotation PBI_ResultType = Exception
+

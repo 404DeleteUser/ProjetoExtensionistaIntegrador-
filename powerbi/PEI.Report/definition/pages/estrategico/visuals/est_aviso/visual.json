@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "est_aviso",
+  "position": {
+    "x": 16,
+    "y": 648,
+    "z": 13000,
+    "width": 1248,
+    "height": 64,
+    "tabOrder": 13000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "A evolução diária, a média móvel e as projeções se completam à medida que as cargas diárias chegam: com um único dia de dados, esses indicadores ficam em branco. Meta: 90% de concluídos até 31/12/2026.",
+                    "textStyle": {
+                      "fontSize": "10pt"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

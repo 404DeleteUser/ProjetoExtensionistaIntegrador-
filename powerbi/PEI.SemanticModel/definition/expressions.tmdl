@@ -1,0 +1,87 @@
+expression ServidorSupabase = "aws-1-us-west-2.pooler.supabase.com:5432" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 4640489e-616d-4ada-86b3-44acf766fe76
+
+	annotation PBI_ResultType = Text
+
+expression BancoSupabase = "postgres" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 45ecd57e-8d47-4975-a9ba-f469473981b9
+
+	annotation PBI_ResultType = Text
+
+/// Apara espacos (inicio, fim e repetidos), remove caracteres invisiveis e poe em MAIUSCULAS. Texto vazio vira null.
+expression fn_padronizar =
+		(valor as any) as nullable text =>
+		let
+		    Texto = if valor = null then "" else Text.From(valor),
+		    SemInvisiveis = Text.Clean(Text.Replace(Texto, "#(00A0)", " ")),
+		    EspacosUnicos = Text.Combine(List.Select(Text.Split(Text.Trim(SemInvisiveis), " "), each _ <> ""), " ")
+		in
+		    if EspacosUnicos = "" then null else Text.Upper(EspacosUnicos)
+	lineageTag: 6167daf2-499b-43ee-9da7-9e3861ba25b8
+	queryGroup: Silver
+
+/// Chave de comparacao: texto padronizado, sem acentos, sem apostrofos, em minusculas. Usada para casar nomes (municipio, situacao).
+expression fn_chave =
+		(valor as any) as nullable text =>
+		let
+		    Padronizado = fn_padronizar(valor),
+		    SemAcentos = if Padronizado = null then null else Text.FromBinary(Text.ToBinary(Padronizado, 1251), TextEncoding.Ascii),
+		    SemApostrofos = if SemAcentos = null then null else Text.Remove(SemAcentos, {"'", "`", "?"})
+		in
+		    if SemApostrofos = null then null else Text.Lower(SemApostrofos)
+	lineageTag: 98b1631b-52fa-4f2c-847f-094aeb4157d8
+	queryGroup: Silver
+
+/// Referencia oficial: municipios de MT com codigo IBGE, lidos de bronze.municipio_ibge (mesma fonte Supabase).
+expression municipios_mt_ibge =
+		let
+		    Fonte = PostgreSQL.Database(ServidorSupabase, BancoSupabase),
+		    // Table.Buffer: le as 142 linhas uma vez e impede que os passos seguintes sejam traduzidos para SQL (query folding)
+		    Dados = Table.Buffer(Fonte{[Schema = "bronze", Item = "municipio_ibge"]}[Data]),
+		    Municipios = Table.RenameColumns(Table.SelectColumns(Dados, {"codigo_ibge", "municipio"}), {{"municipio", "municipio_oficial"}}),
+		    ChaveMunicipio = Table.AddColumn(Municipios, "municipio_chave", each fn_chave([municipio_oficial]), type text),
+		    Tipos = Table.TransformColumnTypes(ChaveMunicipio, {{"codigo_ibge", type text}, {"municipio_oficial", type text}})
+		in
+		    Tipos
+	lineageTag: ff5d55fa-f580-4fbd-b245-2f3ea7c719fe
+	queryGroup: Silver
+
+/// Extracao da Bronze: bronze.vw_snapshot_diario sem transformacao (1 linha por servidor anonimizado por dia).
+expression bronze_snapshot_diario =
+		let
+		    Fonte = PostgreSQL.Database(ServidorSupabase, BancoSupabase),
+		    Dados = Fonte{[Schema = "bronze", Item = "vw_snapshot_diario"]}[Data]
+		in
+		    Dados
+	lineageTag: cb9e9f8c-3deb-4a16-990b-bf7d1e5c9703
+	queryGroup: Silver
+
+/// Snapshot diario limpo: textos padronizados, vazios como Nao informado, situacao nos nomes oficiais e codigo IBGE do municipio.
+expression silver_snapshot =
+		let
+		    Fonte = bronze_snapshot_diario,
+		    ColunasTexto = {"dre", "municipio", "lotacao", "tipo_lotacao", "funcao", "tipo_vinculo"},
+		    TextosPadronizados = Table.TransformColumns(Fonte, List.Transform(ColunasTexto, each {_, fn_padronizar, type nullable text})),
+		    VaziosComoNaoInformado = Table.ReplaceValue(TextosPadronizados, null, "Não informado", Replacer.ReplaceValue, ColunasTexto),
+		    SituacoesOficiais = [concluido = "Concluído", #"aguardando validacao" = "Aguardando validação", #"em andamento" = "Em andamento", #"nao iniciado" = "Não iniciado"],
+		    SituacaoOficial = Table.TransformColumns(VaziosComoNaoInformado, {{"situacao", each let Chave = fn_chave(_) in if Chave = null then "Não informado" else Record.FieldOrDefault(SituacoesOficiais, Chave, fn_padronizar(_)), type text}}),
+		    CorrecoesMunicipio = Table.TransformColumns(SituacaoOficial, {{"municipio", each Record.FieldOrDefault(correcoes_municipio, _, _), type text}}),
+		    ChaveMunicipio = Table.AddColumn(CorrecoesMunicipio, "municipio_chave", each fn_chave([municipio]), type text),
+		    CasamentoIBGE = Table.NestedJoin(ChaveMunicipio, {"municipio_chave"}, municipios_mt_ibge, {"municipio_chave"}, "ibge", JoinKind.LeftOuter),
+		    CodigoIBGE = Table.ExpandTableColumn(CasamentoIBGE, "ibge", {"codigo_ibge", "municipio_oficial"}),
+		    SemChaveTecnica = Table.RemoveColumns(CodigoIBGE, {"municipio_chave"}),
+		    Tipos = Table.TransformColumnTypes(SemChaveTecnica, {{"data", type date}, {"id_servidor", type text}})
+		in
+		    Tipos
+	lineageTag: 90d33a02-7aa0-452f-a1c9-56decf6ce112
+	queryGroup: Silver
+
+/// De-para revisado: nome do municipio na Bronze (padronizado) -> grafia que casa com o IBGE.
+expression correcoes_municipio =
+		[
+		    #"CONQUISTA DO OESTE" = "CONQUISTA D'OESTE",
+		    #"SANTO ANTONIO DO LEVERGER" = "SANTO ANTONIO DE LEVERGER"
+		]
+	lineageTag: 9f71e30e-5120-4fe5-873a-9dbb79957b0e
+	queryGroup: Silver
+

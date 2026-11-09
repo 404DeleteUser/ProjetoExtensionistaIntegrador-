@@ -1,0 +1,267 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "ope_matriz",
+  "position": {
+    "x": 16,
+    "y": 112,
+    "z": 8000,
+    "height": 600,
+    "width": 1248,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "pivotTable",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_lotacao"
+                    }
+                  },
+                  "Property": "dre"
+                }
+              },
+              "queryRef": "dim_lotacao.dre",
+              "nativeQueryRef": "dre",
+              "active": true,
+              "displayName": "DRE"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_lotacao"
+                    }
+                  },
+                  "Property": "municipio_oficial"
+                }
+              },
+              "queryRef": "dim_lotacao.municipio_oficial",
+              "nativeQueryRef": "municipio_oficial",
+              "active": false,
+              "displayName": "Município"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_lotacao"
+                    }
+                  },
+                  "Property": "lotacao"
+                }
+              },
+              "queryRef": "dim_lotacao.lotacao",
+              "nativeQueryRef": "lotacao",
+              "active": false,
+              "displayName": "Lotação"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Servidores"
+                }
+              },
+              "queryRef": "_Medidas.Servidores",
+              "nativeQueryRef": "Servidores"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Não iniciado"
+                }
+              },
+              "queryRef": "_Medidas.Não iniciado",
+              "nativeQueryRef": "Não iniciado"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Em andamento"
+                }
+              },
+              "queryRef": "_Medidas.Em andamento",
+              "nativeQueryRef": "Em andamento"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Aguardando validação"
+                }
+              },
+              "queryRef": "_Medidas.Aguardando validação",
+              "nativeQueryRef": "Aguardando validação"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Concluídos"
+                }
+              },
+              "queryRef": "_Medidas.Concluídos",
+              "nativeQueryRef": "Concluídos"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "% Concluído"
+                }
+              },
+              "queryRef": "_Medidas.% Concluído",
+              "nativeQueryRef": "% Concluído"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Medidas"
+                    }
+                  },
+                  "Property": "Ranking do município na DRE"
+                }
+              },
+              "queryRef": "_Medidas.Ranking do município na DRE",
+              "nativeQueryRef": "Ranking do município na DRE"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "_Medidas"
+                  }
+                },
+                "Property": "% Concluído"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "values": [
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Medidas"
+                        }
+                      },
+                      "Property": "Cor do mapa"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Medidas.% Concluído"
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Situação por DRE > Município > Lotação'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "11D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "subTitle": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

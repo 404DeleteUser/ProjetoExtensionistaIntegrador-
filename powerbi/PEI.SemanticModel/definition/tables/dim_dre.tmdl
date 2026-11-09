@@ -1,0 +1,27 @@
+/// Dimensao DRE: 1 linha por DRE, chave substituta sk_dre. A DRE e atributo da lotacao, nao do municipio: um municipio pode ter lotacoes em DREs diferentes (ex.: Cuiaba no Orgao Central e na DRE Metropolitana).
+table dim_dre
+	lineageTag: f3f522e0-eeb5-4a1e-b407-8c32342b3ff8
+
+	column dre
+		dataType: string
+		lineageTag: 3de395f6-a7f8-4cf9-95f3-8aa6f26a414f
+		sourceColumn: dre
+
+	column sk_dre
+		dataType: int64
+		isHidden
+		lineageTag: 18471ded-a2cd-4754-b22d-49bf74787cda
+		summarizeBy: none
+		sourceColumn: sk_dre
+
+	partition dim_dre = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Distintos = Table.Distinct(Table.SelectColumns(silver_snapshot, {"dre"})),
+				    Ordenado = Table.Sort(Distintos, {{"dre", Order.Ascending}}),
+				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_dre", 1, 1, Int64.Type)
+				in
+				    ChaveSubstituta
+

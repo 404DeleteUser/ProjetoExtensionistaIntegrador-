@@ -1,0 +1,312 @@
+/// Tabela só de medidas (sem dados). Agrupa todas as medidas DAX em pastas de exibição: Situação, Mapa, Evolução e Ranking.
+table _Medidas
+	lineageTag: f91af22f-4367-45f2-9e6f-77dbcf99cbc0
+
+	/// Último dia com carga dentro do período filtrado. Ignora os filtros de DRE, município, situação etc. para que todas as categorias usem o mesmo dia (base do cálculo semiaditivo).
+	measure 'Última data' = CALCULATE ( MAX ( fato_recadastramento[data] ), ALL ( fato_recadastramento ), VALUES ( dim_tempo[Data] ) )
+		formatString: dd/MM/yyyy
+		displayFolder: Situação
+		lineageTag: 271169ad-4336-45a2-b01d-7e0fd94e8582
+
+	/// Total de servidores no último dia com dados do período (semiaditivo: não soma os dias, pois cada dia é uma foto completa).
+	measure Servidores =
+			VAR UltimaData = [Última data]
+			RETURN
+			    CALCULATE ( COUNTROWS ( fato_recadastramento ), fato_recadastramento[data] = UltimaData )
+		formatString: #,##0
+		displayFolder: Situação
+		lineageTag: 0dd98c24-b955-4f10-9279-bb2992308fc7
+
+	/// Servidores com recadastramento concluído no último dia do período.
+	measure Concluídos = CALCULATE ( [Servidores], KEEPFILTERS ( dim_situacao[e_concluido] = TRUE () ) )
+		formatString: #,##0
+		displayFolder: Situação
+		lineageTag: c5299692-d5fa-4a5c-8866-929764fffa1d
+
+	/// Servidores que enviaram o recadastramento e aguardam validação, no último dia do período.
+	measure 'Aguardando validação' = CALCULATE ( [Servidores], KEEPFILTERS ( dim_situacao[situacao] = "Aguardando validação" ) )
+		formatString: #,##0
+		displayFolder: Situação
+		lineageTag: 6b579e4b-a989-4e95-8b63-773b39f9bfa9
+
+	/// Servidores com recadastramento em andamento, no último dia do período.
+	measure 'Em andamento' = CALCULATE ( [Servidores], KEEPFILTERS ( dim_situacao[situacao] = "Em andamento" ) )
+		formatString: #,##0
+		displayFolder: Situação
+		lineageTag: 6a0921f5-5eee-44a7-a523-412e373ae26e
+
+	/// Servidores que ainda não iniciaram o recadastramento, no último dia do período.
+	measure 'Não iniciado' = CALCULATE ( [Servidores], KEEPFILTERS ( dim_situacao[situacao] = "Não iniciado" ) )
+		formatString: #,##0
+		displayFolder: Situação
+		lineageTag: bbdbc418-f9e7-4a42-a47c-7595ab28e9c0
+
+	/// Servidores com situação fora das 4 oficiais (controle de qualidade: o esperado é 0).
+	measure 'Outras situações' = [Servidores] - [Concluídos] - [Aguardando validação] - [Em andamento] - [Não iniciado]
+		formatString: #,##0
+		displayFolder: Situação
+		lineageTag: 5443b4f7-2c9b-4d16-bfdd-22b0b9cf246d
+
+	/// Concluídos ÷ Servidores. O +0 faz o resultado ser 0% (e não vazio) quando há servidores mas nenhum concluído.
+	measure '% Concluído' = DIVIDE ( [Concluídos] + 0, [Servidores] )
+		formatString: 0.0%
+		displayFolder: Situação
+		lineageTag: c4f875a1-f194-4d21-986f-dd8058a32605
+
+	/// Aguardando validação ÷ Servidores (0% quando há servidores mas nenhum nessa situação).
+	measure '% Aguardando validação' = DIVIDE ( [Aguardando validação] + 0, [Servidores] )
+		formatString: 0.0%
+		displayFolder: Situação
+		lineageTag: 93ecd9f6-71fa-4aa7-acfd-9dbb043d6603
+
+	/// Em andamento ÷ Servidores (0% quando há servidores mas nenhum nessa situação).
+	measure '% Em andamento' = DIVIDE ( [Em andamento] + 0, [Servidores] )
+		formatString: 0.0%
+		displayFolder: Situação
+		lineageTag: 9d29f00d-f985-405c-bd57-f699cd2f6a71
+
+	/// Não iniciado ÷ Servidores (0% quando há servidores mas nenhum nessa situação).
+	measure '% Não iniciado' = DIVIDE ( [Não iniciado] + 0, [Servidores] )
+		formatString: 0.0%
+		displayFolder: Situação
+		lineageTag: dbc202cc-e373-4696-a28d-1a1cac56bb2d
+
+	/// Texto para cartão: "X de N servidores", com separador de milhar.
+	measure '% Concluído (rótulo)' =
+			IF (
+			    NOT ISBLANK ( [Servidores] ),
+			    FORMAT ( [Concluídos] + 0, "#,##0" ) & " de " & FORMAT ( [Servidores], "#,##0" ) & " servidores"
+			)
+		displayFolder: Situação
+		lineageTag: f84838eb-3f96-4262-ab22-319e7f48bfad
+
+	/// Faixa de 20 em 20 pontos do % Concluído: 0 (0–19%), 1 (20–39%), 2 (40–59%), 3 (60–79%), 4 (80–100%). Vazio quando não há servidores.
+	measure 'Faixa % Concluído' = IF ( NOT ISBLANK ( [Servidores] ), MIN ( 4, INT ( [% Concluído] * 100 / 20 ) ) )
+		formatString: 0
+		displayFolder: Mapa
+		lineageTag: 88f2f41c-d8db-4485-b363-ba404dde4d99
+
+	/// Cor hexadecimal do município no mapa (formatação condicional por valor do campo). 5 intensidades do tom de destaque do DataHub; cinza-claro para município sem servidores.
+	measure 'Cor do mapa' =
+			SWITCH (
+			    [Faixa % Concluído],
+			    0, "#CAD8F3",
+			    1, "#A3BAEA",
+			    2, "#7C9DE0",
+			    3, "#507CD6",
+			    4, "#245BCC",
+			    "#F7F9FB"
+			)
+		displayFolder: Mapa
+		lineageTag: 136d799f-d12e-42e0-aea5-d35f59cd4fe9
+
+	/// Cor hexadecimal de cada situação, igual ao DataHub: cinza (Não iniciado), âmbar (Em andamento), azul (Aguardando validação), verde (Concluído).
+	measure 'Cor da situação' =
+			SWITCH (
+			    SELECTEDVALUE ( dim_situacao[situacao] ),
+			    "Não iniciado", "#96A0AE",
+			    "Em andamento", "#8A5B00",
+			    "Aguardando validação", "#245BCC",
+			    "Concluído", "#087853"
+			)
+		displayFolder: Mapa
+		lineageTag: 944dacee-b310-4c9c-b7fa-99a51236bd49
+
+	/// Auxiliar: último dia com carga antes da Última data. Vazio quando só existe um dia.
+	measure 'Data anterior' =
+			VAR UltimaData = [Última data]
+			RETURN
+			    CALCULATE ( MAX ( fato_recadastramento[data] ), ALL ( fato_recadastramento ), dim_tempo[Data] < UltimaData )
+		formatString: dd/MM/yyyy
+		isHidden
+		displayFolder: Evolução
+		lineageTag: 16038dba-edeb-4867-a0b2-ca3adaac1eef
+
+	/// Concluídos no último dia com carga antes do dia atual. Vazio quando só existe um dia.
+	measure 'Concluídos dia anterior' =
+			VAR Anterior = [Data anterior]
+			RETURN
+			    IF ( NOT ISBLANK ( Anterior ), CALCULATE ( [Concluídos], dim_tempo[Data] = Anterior ) )
+		formatString: #,##0
+		displayFolder: Evolução
+		lineageTag: 8a011814-eac7-433e-92e5-9c2edac066d8
+
+	/// Concluídos hoje − Concluídos no dia anterior com carga.
+	measure 'Novos concluídos' = IF ( NOT ISBLANK ( [Data anterior] ), [Concluídos] - [Concluídos dia anterior] )
+		formatString: #,##0
+		displayFolder: Evolução
+		lineageTag: 0331350d-9e9e-4985-9ad5-72977699319f
+
+	/// Diferença, em pontos percentuais, entre o % Concluído de hoje e o do dia anterior com carga.
+	measure 'Variação p.p. % Concluído' =
+			VAR Anterior = [Data anterior]
+			RETURN
+			    IF (
+			        NOT ISBLANK ( Anterior ),
+			        ( [% Concluído] - CALCULATE ( [% Concluído], dim_tempo[Data] = Anterior ) ) * 100
+			    )
+		formatString: +0.0" p.p.";-0.0" p.p.";0.0" p.p."
+		displayFolder: Evolução
+		lineageTag: d0ea7b8c-8f79-43ef-b0d4-a8eb65844f8f
+
+	/// Média de novos concluídos por dia nos últimos 7 dias (só dias que têm dia anterior para comparar).
+	measure 'Média móvel 7 dias' =
+			VAR UltimaData = [Última data]
+			VAR Dias =
+			    FILTER (
+			        DATESINPERIOD ( dim_tempo[Data], UltimaData, -7, DAY ),
+			        NOT ISBLANK ( CALCULATE ( [Novos concluídos] ) )
+			    )
+			RETURN
+			    AVERAGEX ( Dias, CALCULATE ( [Novos concluídos] ) )
+		formatString: #,##0.0
+		displayFolder: Evolução
+		lineageTag: acdeb1a9-ace9-44cc-9ad9-5dbeb430d603
+
+	/// Concluídos hoje − Concluídos 7 dias antes. Vazio quando ainda não há 7 dias de histórico.
+	measure 'Variação semanal' =
+			VAR ServidoresSemanaPassada = CALCULATE ( [Servidores], DATEADD ( dim_tempo[Data], -7, DAY ) )
+			VAR ConcluidosSemanaPassada = CALCULATE ( [Concluídos], DATEADD ( dim_tempo[Data], -7, DAY ) )
+			RETURN
+			    IF ( NOT ISBLANK ( ServidoresSemanaPassada ), [Concluídos] - ConcluidosSemanaPassada )
+		formatString: +#,##0;-#,##0;0
+		displayFolder: Evolução
+		lineageTag: d0a20634-faea-420f-917c-7c8b611769e4
+
+	/// Projeção: (Servidores − Concluídos) ÷ Média móvel 7 dias, arredondado para cima. Vazio se a média não for positiva.
+	measure 'Dias para concluir' =
+			VAR Media = [Média móvel 7 dias]
+			RETURN
+			    IF ( Media > 0, ROUNDUP ( DIVIDE ( [Servidores] - [Concluídos], Media ), 0 ) )
+		formatString: #,##0
+		displayFolder: Evolução
+		lineageTag: 92909284-25d0-43b4-86c5-217248f680f3
+
+	/// Última data + Dias para concluir, mantido o ritmo da média móvel de 7 dias.
+	measure 'Data prevista de conclusão' =
+			VAR Dias = [Dias para concluir]
+			RETURN
+			    IF ( NOT ISBLANK ( Dias ), [Última data] + Dias )
+		formatString: dd/MM/yyyy
+		displayFolder: Evolução
+		lineageTag: 01e2db71-c478-4012-8406-427e3ac090ec
+
+	/// Posição do município dentro da sua DRE pelo % Concluído (1 = maior). Use com a hierarquia DRE > Município de dim_lotacao.
+	measure 'Ranking do município na DRE' =
+			IF (
+			    ISINSCOPE ( dim_lotacao[municipio_oficial] ) && NOT ISBLANK ( [Servidores] ),
+			    RANKX (
+			        CALCULATETABLE (
+			            VALUES ( dim_lotacao[municipio_oficial] ),
+			            REMOVEFILTERS ( dim_lotacao[municipio_oficial], dim_lotacao[lotacao], dim_lotacao[sk_lotacao] )
+			        ),
+			        [% Concluído],
+			        ,
+			        DESC,
+			        SKIP
+			    )
+			)
+		formatString: 0
+		displayFolder: Ranking
+		lineageTag: 36f89da0-0990-4367-acab-d9cb0d5ac12e
+
+	/// Meta oficial: 90% dos servidores com recadastramento concluído.
+	measure 'Meta %' = 0.9
+		formatString: 0.0%
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c01
+
+	/// Prazo da meta: 31/12/2026.
+	measure Data-limite = DATE ( 2026, 12, 31 )
+		formatString: dd/MM/yyyy
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c02
+
+	/// % Concluído ÷ Meta %. 100% significa meta cumprida.
+	measure '% da meta atingido' = DIVIDE ( [% Concluído], [Meta %] )
+		formatString: 0.0%
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c03
+
+	/// Quantos concluídos a meta exige: Servidores × Meta %, arredondado para cima.
+	measure 'Concluídos necessários' = IF ( NOT ISBLANK ( [Servidores] ), ROUNDUP ( [Servidores] * [Meta %], 0 ) )
+		formatString: #,##0
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c04
+
+	/// Concluídos necessários − Concluídos (nunca negativo).
+	measure 'Faltam para a meta' = IF ( NOT ISBLANK ( [Servidores] ), MAX ( 0, [Concluídos necessários] - [Concluídos] ) )
+		formatString: #,##0
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c05
+
+	/// Dias entre a Última data e a Data-limite (nunca negativo).
+	measure 'Dias restantes' =
+			VAR UltimaData = [Última data]
+			RETURN
+			    IF ( NOT ISBLANK ( UltimaData ), MAX ( 0, INT ( [Data-limite] - UltimaData ) ) )
+		formatString: #,##0
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c06
+
+	/// Novos concluídos por dia necessários para atingir a meta no prazo: Faltam ÷ Dias restantes. Comparar com a Média móvel 7 dias.
+	measure 'Ritmo necessário por dia' = DIVIDE ( [Faltam para a meta], [Dias restantes] )
+		formatString: #,##0
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c07
+
+	/// Quando a meta (90%) será atingida mantido o ritmo atual: Última data + Faltam ÷ Média móvel 7 dias (arredondado para cima). Vazio sem histórico.
+	measure 'Data prevista da meta' =
+			VAR Media = [Média móvel 7 dias]
+			RETURN
+			    IF ( Media > 0, [Última data] + ROUNDUP ( DIVIDE ( [Faltam para a meta], Media ), 0 ) )
+		formatString: dd/MM/yyyy
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c08
+
+	/// Meta atingida / Sem histórico / No prazo / Atrasado, comparando a Data prevista da meta com a Data-limite.
+	measure 'Situação da meta' =
+			VAR Prevista = [Data prevista da meta]
+			RETURN
+			    SWITCH (
+			        TRUE (),
+			        ISBLANK ( [Servidores] ), BLANK (),
+			        [% Concluído] >= [Meta %], "Meta atingida",
+			        ISBLANK ( Prevista ), "Sem histórico",
+			        Prevista <= [Data-limite], "No prazo",
+			        "Atrasado"
+			    )
+		displayFolder: Meta
+		lineageTag: 5d1c2a10-7b3e-4f21-9a6c-1e2f3a4b5c09
+
+	/// Texto para cartão: [Novos concluídos] formatado, ou "Sem histórico" quando a medida está vazia (ex.: só um dia de carga).
+	measure 'Novos concluídos (cartão)' = IF ( ISBLANK ( [Novos concluídos] ), "Sem histórico", FORMAT ( [Novos concluídos], "#,##0" ) )
+		displayFolder: Exibição
+		lineageTag: ee054483-f934-4c22-ad54-fafc359698e5
+
+	/// Texto para cartão: [Média móvel 7 dias] formatada, ou "Sem histórico" quando a medida está vazia.
+	measure 'Média móvel 7 dias (cartão)' = IF ( ISBLANK ( [Média móvel 7 dias] ), "Sem histórico", FORMAT ( [Média móvel 7 dias], "#,##0.0" ) )
+		displayFolder: Exibição
+		lineageTag: a8955fbc-3135-4216-b113-3576c6e6c873
+
+	/// Texto para cartão: [Dias para concluir] formatado, ou "Sem histórico" quando a medida está vazia (sem histórico ou média móvel não positiva).
+	measure 'Dias para concluir (cartão)' = IF ( ISBLANK ( [Dias para concluir] ), "Sem histórico", FORMAT ( [Dias para concluir], "#,##0" ) )
+		displayFolder: Exibição
+		lineageTag: b21ce52b-20dd-4464-85fd-be93bbd5d18c
+
+	/// Texto para cartão: [Data prevista de conclusão] formatada, ou "Sem histórico" quando a medida está vazia.
+	measure 'Data prevista de conclusão (cartão)' = IF ( ISBLANK ( [Data prevista de conclusão] ), "Sem histórico", FORMAT ( [Data prevista de conclusão], "dd/MM/yyyy" ) )
+		displayFolder: Exibição
+		lineageTag: f9afb9f3-c0d4-4974-8a14-246cb9be184e
+
+	column _
+		isHidden
+		lineageTag: 1dc179bd-3242-452b-9eda-27363176ef9c
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [_]
+
+	partition _Medidas = calculated
+		mode: import
+		source = ROW("_", BLANK())
+

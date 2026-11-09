@@ -40,9 +40,14 @@ Não contrarie sem aprovação do usuário.
   - **Silver** (Power Query): limpeza, padronização, qualidade de dados e nomes de município batendo com o mapa.
   - **Gold** (modelo do Power BI): Star Schema.
 - Star Schema: `fato_recadastramento` (1 linha por servidor anonimizado por dia, gerada pela view que expande o SCD2) + `dim_municipio`, `dim_dre`, `dim_lotacao`, `dim_vinculo`, `dim_funcao`, `dim_situacao`, `dim_tempo`.
+- DRE é atributo da lotação, não do município: um município pode ter lotações em DREs diferentes (ex.: Cuiabá tem o Órgão Central e a DRE Metropolitana). Por isso `dim_lotacao` tem chave lotação + município + DRE e `dim_municipio` não tem DRE.
+- Medidas são semiaditivas: usam o último dia com carga do período e nunca somam dias.
+- Meta oficial: 90% dos servidores com recadastramento concluído até 31/12/2026.
+- Supabase liga RLS nas tabelas novas: toda tabela lida pelo Power BI precisa de `GRANT SELECT` e de uma política de leitura para o `leitor_pei`.
 - Uma carga por dia: se o dia já foi carregado, a carga não faz nada. Dia sem carga não abre buraco: o estado vale até a próxima mudança.
 - Power BI em formato Power BI Project (`.pbip`), versionado como texto, sem credenciais.
-- Power BI com três painéis: operacional (situação por escola/lotação), gerencial (mapa + DRE/município) e estratégico (% geral, evolução diária e projeção da meta).
+- Power BI com três painéis: operacional (situação por escola/lotação), gerencial (mapa + DRE/município) e estratégico (% geral, evolução diária e projeção da meta). O layout segue o painel de Recadastramento do DataHub; o mapa é um Mapa de formas com a malha pública do IBGE.
+- Indicadores documentados em `docs/catalogo-indicadores.md`: todo visual novo precisa responder a uma pergunta do catálogo.
 - Mineração de dados (KDD/CRISP-DM): clusterizar municípios pelo perfil de adesão ou classificar quem tende a ficar "não iniciado".
 
 ## 5. Entregáveis exigidos pelo PEI

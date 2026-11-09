@@ -1,0 +1,48 @@
+/// Dimensao situacao: 4 situacoes oficiais com ordem do fluxo e indicador e_concluido. Valores fora do padrao entram depois (ordem 5+), para o fato nunca ficar sem chave.
+table dim_situacao
+	lineageTag: 37ce9b37-731b-489d-864c-749efededd56
+
+	column situacao
+		dataType: string
+		lineageTag: c6c2936c-6ef5-453b-a86b-ecb84b269505
+		sourceColumn: situacao
+		sortByColumn: ordem
+
+	column ordem
+		dataType: int64
+		isHidden
+		lineageTag: 241c0559-5b49-4453-9a2c-035bea5b38a6
+		summarizeBy: none
+		sourceColumn: ordem
+
+	column e_concluido
+		dataType: boolean
+		lineageTag: bb9a9b8b-fd90-4b1e-8f7a-027d7b51dcdc
+		sourceColumn: e_concluido
+
+	column sk_situacao
+		dataType: int64
+		isHidden
+		lineageTag: 2af48357-137a-47b4-80e1-5dceaf327914
+		summarizeBy: none
+		sourceColumn: sk_situacao
+
+	partition dim_situacao = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Oficiais = #table(type table [situacao = text, ordem = Int64.Type, e_concluido = logical], {
+				        {"Não iniciado", 1, false},
+				        {"Em andamento", 2, false},
+				        {"Aguardando validação", 3, false},
+				        {"Concluído", 4, true}
+				    }),
+				    NaSilver = List.Sort(List.Distinct(silver_snapshot[situacao])),
+				    ForaDoPadrao = List.Difference(NaSilver, Oficiais[situacao]),
+				    Extras = #table(type table [situacao = text, ordem = Int64.Type, e_concluido = logical], List.Transform(List.Positions(ForaDoPadrao), each {ForaDoPadrao{_}, 5 + _, false})),
+				    Todas = Table.Combine({Oficiais, Extras}),
+				    ChaveSubstituta = Table.AddIndexColumn(Todas, "sk_situacao", 1, 1, Int64.Type)
+				in
+				    ChaveSubstituta
+

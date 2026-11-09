@@ -1,0 +1,27 @@
+/// Dimensao tipo de vinculo: chave substituta sk_vinculo.
+table dim_vinculo
+	lineageTag: 78dc2c21-abcd-4104-a73f-d1305f8d4b33
+
+	column tipo_vinculo
+		dataType: string
+		lineageTag: 9af4076f-8487-411f-b590-cb01c17d18e1
+		sourceColumn: tipo_vinculo
+
+	column sk_vinculo
+		dataType: int64
+		isHidden
+		lineageTag: 299aaca9-4ebb-4073-8dc9-a3e23f3934ae
+		summarizeBy: none
+		sourceColumn: sk_vinculo
+
+	partition dim_vinculo = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Distintos = Table.Distinct(Table.SelectColumns(silver_snapshot, {"tipo_vinculo"})),
+				    Ordenado = Table.Sort(Distintos, {{"tipo_vinculo", Order.Ascending}}),
+				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_vinculo", 1, 1, Int64.Type)
+				in
+				    ChaveSubstituta
+

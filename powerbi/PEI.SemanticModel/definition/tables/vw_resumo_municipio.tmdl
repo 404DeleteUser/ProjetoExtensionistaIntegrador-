@@ -1,0 +1,95 @@
+table vw_resumo_municipio
+	isHidden
+	lineageTag: 1c7a825e-2407-4663-811e-5bfbc2de7d8c
+
+	column dre
+		dataType: string
+		lineageTag: 9c2b27db-cdcf-4d01-820f-146adabdd1b4
+		summarizeBy: none
+		sourceColumn: dre
+
+		annotation SummarizationSetBy = Automatic
+
+	column municipio
+		dataType: string
+		lineageTag: 5dab6682-1173-4203-9428-83189082f8de
+		summarizeBy: none
+		sourceColumn: municipio
+
+		annotation SummarizationSetBy = Automatic
+
+	column total
+		dataType: int64
+		lineageTag: 67d1df37-3664-40c7-8887-e3b2f400f659
+		summarizeBy: sum
+		sourceColumn: total
+
+		annotation SummarizationSetBy = Automatic
+
+	column concluido
+		dataType: int64
+		lineageTag: dcc3f164-8847-47fe-ad47-b3c1dfa0c68c
+		summarizeBy: sum
+		sourceColumn: concluido
+
+		annotation SummarizationSetBy = Automatic
+
+	column aguardando_validacao
+		dataType: int64
+		lineageTag: a8032ff6-96a7-4a60-a8c1-45dcd38cc1b2
+		summarizeBy: sum
+		sourceColumn: aguardando_validacao
+
+		annotation SummarizationSetBy = Automatic
+
+	column em_andamento
+		dataType: int64
+		lineageTag: ff2ebcf8-620f-4e4b-aebe-3bb6fc4d6e20
+		summarizeBy: sum
+		sourceColumn: em_andamento
+
+		annotation SummarizationSetBy = Automatic
+
+	column nao_iniciado
+		dataType: int64
+		lineageTag: 4c8c9caf-8a83-4642-a38f-b69af1b21dcb
+		summarizeBy: sum
+		sourceColumn: nao_iniciado
+
+		annotation SummarizationSetBy = Automatic
+
+	column outras_situacoes
+		dataType: int64
+		lineageTag: 384325ec-135b-40ec-9cc9-8bdfcb6c90ea
+		summarizeBy: sum
+		sourceColumn: outras_situacoes
+
+		annotation SummarizationSetBy = Automatic
+
+	column pct_concluido
+		dataType: double
+		lineageTag: 760dcd27-c100-4859-a151-23617b80989f
+		summarizeBy: none
+		sourceColumn: pct_concluido
+
+		annotation SummarizationSetBy = Automatic
+
+	column ranking_na_dre
+		dataType: int64
+		lineageTag: b0333e76-97ad-4c3b-873e-788d65570372
+		summarizeBy: none
+		sourceColumn: ranking_na_dre
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_resumo_municipio = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorSupabase, BancoSupabase),
+				    Dados = Fonte{[Schema = "bronze", Item = "vw_resumo_municipio"]}[Data]
+				in
+				    Dados
+
+	annotation PBI_ResultType = Exception
+

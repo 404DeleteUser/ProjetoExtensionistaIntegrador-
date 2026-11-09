@@ -1,0 +1,86 @@
+/// Fato: 1 linha por servidor anonimizado por dia (snapshot). Contagens sao semi-aditivas no tempo: usar sempre o ultimo dia do contexto.
+table fato_recadastramento
+	lineageTag: f64e27f3-ba16-42e2-bec8-238f9fb0394f
+
+	column data
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 7798362f-d331-42f3-9935-846c3325b50f
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column id_servidor
+		dataType: string
+		isHidden
+		lineageTag: f16716b9-955e-43e1-b87c-7d7e6662dbc5
+		sourceColumn: id_servidor
+
+	column sk_lotacao
+		dataType: int64
+		isHidden
+		lineageTag: e9ec40b8-cbfe-4646-93e9-4dd0e0f3b729
+		summarizeBy: none
+		sourceColumn: sk_lotacao
+
+	column sk_municipio
+		dataType: int64
+		isHidden
+		lineageTag: 22fd8d90-0ba7-4783-82e8-bedcfd844f3a
+		summarizeBy: none
+		sourceColumn: sk_municipio
+
+	column sk_dre
+		dataType: int64
+		isHidden
+		lineageTag: f83c12df-bf0a-4e1d-83e5-b9e4284aa8e3
+		summarizeBy: none
+		sourceColumn: sk_dre
+
+	column sk_vinculo
+		dataType: int64
+		isHidden
+		lineageTag: ea4d16c1-d45c-4c39-8086-729f818290ac
+		summarizeBy: none
+		sourceColumn: sk_vinculo
+
+	column sk_funcao
+		dataType: int64
+		isHidden
+		lineageTag: 86dd9bb5-1a03-4125-bbe3-471b92623dc6
+		summarizeBy: none
+		sourceColumn: sk_funcao
+
+	column sk_situacao
+		dataType: int64
+		isHidden
+		lineageTag: 02191d60-5129-4445-8df1-ec3266a97f50
+		summarizeBy: none
+		sourceColumn: sk_situacao
+
+	partition fato_recadastramento = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Silver = Table.Buffer(silver_snapshot),
+				    ComDre = Table.NestedJoin(Silver, {"dre"}, Table.Buffer(dim_dre), {"dre"}, "d", JoinKind.LeftOuter),
+				    SkDre = Table.ExpandTableColumn(ComDre, "d", {"sk_dre"}),
+				    ComMunicipio = Table.NestedJoin(SkDre, {"codigo_ibge"}, Table.Buffer(dim_municipio), {"codigo_ibge"}, "m", JoinKind.LeftOuter),
+				    SkMunicipio = Table.ExpandTableColumn(ComMunicipio, "m", {"sk_municipio"}),
+				    ComLotacao = Table.NestedJoin(SkMunicipio, {"dre", "municipio_oficial", "lotacao"}, Table.Buffer(dim_lotacao), {"dre", "municipio_oficial", "lotacao"}, "l", JoinKind.LeftOuter),
+				    SkLotacao = Table.ExpandTableColumn(ComLotacao, "l", {"sk_lotacao"}),
+				    ComVinculo = Table.NestedJoin(SkLotacao, {"tipo_vinculo"}, Table.Buffer(dim_vinculo), {"tipo_vinculo"}, "v", JoinKind.LeftOuter),
+				    SkVinculo = Table.ExpandTableColumn(ComVinculo, "v", {"sk_vinculo"}),
+				    ComFuncao = Table.NestedJoin(SkVinculo, {"funcao"}, Table.Buffer(dim_funcao), {"funcao"}, "f", JoinKind.LeftOuter),
+				    SkFuncao = Table.ExpandTableColumn(ComFuncao, "f", {"sk_funcao"}),
+				    ComSituacao = Table.NestedJoin(SkFuncao, {"situacao"}, Table.Buffer(dim_situacao), {"situacao"}, "s", JoinKind.LeftOuter),
+				    SkSituacao = Table.ExpandTableColumn(ComSituacao, "s", {"sk_situacao"}),
+				    SoChaves = Table.SelectColumns(SkSituacao, {"data", "id_servidor", "sk_lotacao", "sk_municipio", "sk_dre", "sk_vinculo", "sk_funcao", "sk_situacao"}),
+				    Tipos = Table.TransformColumnTypes(SoChaves, {{"data", type date}, {"id_servidor", type text}, {"sk_lotacao", Int64.Type}, {"sk_municipio", Int64.Type}, {"sk_dre", Int64.Type}, {"sk_vinculo", Int64.Type}, {"sk_funcao", Int64.Type}, {"sk_situacao", Int64.Type}})
+				in
+				    Tipos
+

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "name": "ger_mapa_legenda",
+  "position": {
+    "x": 16,
+    "y": 676,
+    "z": 14000,
+    "width": 400,
+    "height": 36,
+    "tabOrder": 14000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "■ ",
+                    "textStyle": {
+                      "fontSize": "12pt",
+                      "color": "#CAD8F3"
+                    }
+                  },
+                  {
+                    "value": "0–19%   ",
+                    "textStyle": {
+                      "fontSize": "9pt"
+                    }
+                  },
+                  {
+                    "value": "■ ",
+                    "textStyle": {
+                      "fontSize": "12pt",
+                      "color": "#A3BAEA"
+                    }
+                  },
+                  {
+                    "value": "20–39%   ",
+                    "textStyle": {
+                      "fontSize": "9pt"
+                    }
+                  },
+                  {
+                    "value": "■ ",
+                    "textStyle": {
+                      "fontSize": "12pt",
+                      "color": "#7C9DE0"
+                    }
+                  },
+                  {
+                    "value": "40–59%   ",
+                    "textStyle": {
+                      "fontSize": "9pt"
+                    }
+                  },
+                  {
+                    "value": "■ ",
+                    "textStyle": {
+                      "fontSize": "12pt",
+                      "color": "#507CD6"
+                    }
+                  },
+                  {
+                    "value": "60–79%   ",
+                    "textStyle": {
+                      "fontSize": "9pt"
+                    }
+                  },
+                  {
+                    "value": "■ ",
+                    "textStyle": {
+                      "fontSize": "12pt",
+                      "color": "#245BCC"
+                    }
+                  },
+                  {
+                    "value": "80–100%   ",
+                    "textStyle": {
+                      "fontSize": "9pt"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

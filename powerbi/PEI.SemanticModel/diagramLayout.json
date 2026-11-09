@@ -1,0 +1,191 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 1420,
+            "y": 26
+          },
+          "nodeIndex": "vw_evolucao_diaria",
+          "nodeLineageTag": "2ff35797-1d6d-4800-a4c1-fbf0a852c1b1",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1704,
+            "y": 0
+          },
+          "nodeIndex": "vw_resumo_municipio",
+          "nodeLineageTag": "1c7a825e-2407-4663-811e-5bfbc2de7d8c",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1988,
+            "y": 62
+          },
+          "nodeIndex": "municipio_de_para",
+          "nodeLineageTag": "d61facdc-32cf-4980-9784-b3a3ce65f47f",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2272,
+            "y": 50
+          },
+          "nodeIndex": "qualidade_dados",
+          "nodeLineageTag": "ca0a5a7b-25a3-40a5-af76-1ff4040fef73",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 0,
+            "y": 86
+          },
+          "nodeIndex": "dim_dre",
+          "nodeLineageTag": "f3f522e0-eeb5-4a1e-b407-8c32342b3ff8",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 284,
+            "y": 86
+          },
+          "nodeIndex": "dim_funcao",
+          "nodeLineageTag": "5edd2b20-8ffb-41f1-b905-8e6f55e593d0",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 568,
+            "y": 62
+          },
+          "nodeIndex": "dim_situacao",
+          "nodeLineageTag": "37ce9b37-731b-489d-864c-749efededd56",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 852,
+            "y": 26
+          },
+          "nodeIndex": "dim_tempo",
+          "nodeLineageTag": "65175629-c2b7-4640-8a27-6645c7724506",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1136,
+            "y": 86
+          },
+          "nodeIndex": "dim_vinculo",
+          "nodeLineageTag": "78dc2c21-abcd-4104-a73f-d1305f8d4b33",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2556,
+            "y": 50
+          },
+          "nodeIndex": "dim_lotacao",
+          "nodeLineageTag": "3781faca-780e-47e9-8649-2496de5717aa",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 2840,
+            "y": 74
+          },
+          "nodeIndex": "dim_municipio",
+          "nodeLineageTag": "67a0ca00-d3b4-4d98-a195-e51ccd5fbbf6",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3124,
+            "y": 14
+          },
+          "nodeIndex": "fato_recadastramento",
+          "nodeLineageTag": "f64e27f3-ba16-42e2-bec8-238f9fb0394f",
+          "size": {
+            "height": 272,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 3408,
+            "y": 50
+          },
+          "nodeIndex": "_Medidas",
+          "nodeLineageTag": "f91af22f-4367-45f2-9e6f-77dbcf99cbc0",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Todas as tabelas",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "Todas as tabelas",
+  "defaultDiagram": "Todas as tabelas"
+}

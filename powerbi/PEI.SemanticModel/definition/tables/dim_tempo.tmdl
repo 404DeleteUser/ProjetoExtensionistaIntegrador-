@@ -1,0 +1,70 @@
+/// Calendario continuo do primeiro ao ultimo dia com dados. Tabela de datas do modelo.
+table dim_tempo
+	lineageTag: 65175629-c2b7-4640-8a27-6645c7724506
+	dataCategory: Time
+
+	column Data
+		dataType: dateTime
+		isUnique
+		formatString: dd/MM/yyyy
+		lineageTag: e38beed8-add9-4e0c-a755-c0307b3f9c74
+		sourceColumn: Data
+
+	column Ano
+		dataType: int64
+		lineageTag: c8d643b6-a31c-47cc-9571-df18e0803038
+		summarizeBy: none
+		sourceColumn: Ano
+
+	column 'Mês nº'
+		dataType: int64
+		isHidden
+		lineageTag: fe776c1a-79e2-4e85-b48a-7f4c1c9cf09e
+		summarizeBy: none
+		sourceColumn: Mês nº
+
+	column 'Nome do mês'
+		dataType: string
+		lineageTag: 5b540dd0-aacf-4897-927d-132fce617512
+		sourceColumn: Nome do mês
+		sortByColumn: 'Mês nº'
+
+	column 'Semana do ano'
+		dataType: int64
+		lineageTag: 229e3923-46d2-4965-b60b-d9279aeff4d6
+		summarizeBy: none
+		sourceColumn: Semana do ano
+
+	column 'Dia da semana nº'
+		dataType: int64
+		isHidden
+		lineageTag: f43de4a3-b9da-4598-98d6-35066ba0907b
+		summarizeBy: none
+		sourceColumn: Dia da semana nº
+
+	column 'Dia da semana'
+		dataType: string
+		lineageTag: 6aec595b-c861-4773-9104-a4eeecabaf52
+		sourceColumn: Dia da semana
+		sortByColumn: 'Dia da semana nº'
+
+	partition dim_tempo = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Datas = silver_snapshot[data],
+				    Inicio = List.Min(Datas),
+				    Fim = List.Max(Datas),
+				    Dias = List.Dates(Inicio, Duration.Days(Fim - Inicio) + 1, #duration(1, 0, 0, 0)),
+				    Calendario = Table.FromList(Dias, Splitter.SplitByNothing(), type table [Data = date]),
+				    Maiuscula = (t as text) as text => Text.Upper(Text.Start(t, 1)) & Text.Range(t, 1),
+				    Ano = Table.AddColumn(Calendario, "Ano", each Date.Year([Data]), Int64.Type),
+				    MesNumero = Table.AddColumn(Ano, "Mês nº", each Date.Month([Data]), Int64.Type),
+				    NomeMes = Table.AddColumn(MesNumero, "Nome do mês", each Maiuscula(Date.MonthName([Data], "pt-BR")), type text),
+				    Semana = Table.AddColumn(NomeMes, "Semana do ano", each Date.WeekOfYear([Data]), Int64.Type),
+				    DiaSemanaNumero = Table.AddColumn(Semana, "Dia da semana nº", each Date.DayOfWeek([Data], Day.Monday) + 1, Int64.Type),
+				    DiaSemana = Table.AddColumn(DiaSemanaNumero, "Dia da semana", each Maiuscula(Date.DayOfWeekName([Data], "pt-BR")), type text)
+				in
+				    DiaSemana
+

@@ -1,0 +1,28 @@
+relationship fato_dim_tempo
+	fromColumn: fato_recadastramento.data
+	toColumn: dim_tempo.Data
+
+relationship fato_dim_lotacao
+	fromColumn: fato_recadastramento.sk_lotacao
+	toColumn: dim_lotacao.sk_lotacao
+
+relationship fato_dim_municipio
+	fromColumn: fato_recadastramento.sk_municipio
+	toColumn: dim_municipio.sk_municipio
+
+relationship fato_dim_dre
+	fromColumn: fato_recadastramento.sk_dre
+	toColumn: dim_dre.sk_dre
+
+relationship fato_dim_vinculo
+	fromColumn: fato_recadastramento.sk_vinculo
+	toColumn: dim_vinculo.sk_vinculo
+
+relationship fato_dim_funcao
+	fromColumn: fato_recadastramento.sk_funcao
+	toColumn: dim_funcao.sk_funcao
+
+relationship fato_dim_situacao
+	fromColumn: fato_recadastramento.sk_situacao
+	toColumn: dim_situacao.sk_situacao
+

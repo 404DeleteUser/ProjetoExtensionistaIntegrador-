@@ -1,0 +1,74 @@
+table vw_evolucao_diaria
+	isHidden
+	lineageTag: 2ff35797-1d6d-4800-a4c1-fbf0a852c1b1
+
+	column data
+		dataType: dateTime
+		formatString: dd/MM/yyyy
+		lineageTag: 9c12310e-7aed-4a9b-9532-130dc9ef1c8d
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column total
+		dataType: int64
+		lineageTag: 020612d3-b908-4cb7-8709-dd4a0b0d31df
+		summarizeBy: none
+		sourceColumn: total
+
+		annotation SummarizationSetBy = Automatic
+
+	column concluido
+		dataType: int64
+		lineageTag: 70b0556e-6fa8-4dd8-8691-f916b6696129
+		summarizeBy: none
+		sourceColumn: concluido
+
+		annotation SummarizationSetBy = Automatic
+
+	column pct_concluido
+		dataType: double
+		lineageTag: 46901df2-8e4e-4155-a00b-78aca4170cec
+		summarizeBy: none
+		sourceColumn: pct_concluido
+
+		annotation SummarizationSetBy = Automatic
+
+	column novos_concluidos
+		dataType: int64
+		lineageTag: 5e1ee756-90de-46be-bced-9f2585c820fc
+		summarizeBy: sum
+		sourceColumn: novos_concluidos
+
+		annotation SummarizationSetBy = Automatic
+
+	column media_movel_7d
+		dataType: double
+		lineageTag: 6ec7c935-c9e0-49df-818a-04ca6dffb6db
+		summarizeBy: none
+		sourceColumn: media_movel_7d
+
+		annotation SummarizationSetBy = Automatic
+
+	column dias_para_concluir
+		dataType: int64
+		lineageTag: c0850e2f-0c9c-49d8-b115-29514606cc85
+		summarizeBy: none
+		sourceColumn: dias_para_concluir
+
+		annotation SummarizationSetBy = Automatic
+
+	partition vw_evolucao_diaria = m
+		mode: import
+		source =
+				let
+				    Fonte = PostgreSQL.Database(ServidorSupabase, BancoSupabase),
+				    Dados = Fonte{[Schema = "bronze", Item = "vw_evolucao_diaria"]}[Data]
+				in
+				    Dados
+
+	annotation PBI_ResultType = Table
+

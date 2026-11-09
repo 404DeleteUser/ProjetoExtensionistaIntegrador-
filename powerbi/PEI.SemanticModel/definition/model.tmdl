@@ -1,0 +1,41 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: pt-BR
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+/// Camada Silver: limpeza, padronizacao e qualidade de dados (Power Query)
+queryGroup Silver
+
+	annotation PBI_QueryGroupOrder = 0
+
+/// Camada Gold: Star Schema (fato e dimensoes) a partir da silver_snapshot
+queryGroup Gold
+
+	annotation PBI_QueryGroupOrder = 1
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_ProTooling = ["DevMode","MCP-PBIModeling"]
+
+annotation PBI_QueryOrder = ["ServidorSupabase","BancoSupabase","vw_resumo_municipio","vw_evolucao_diaria","municipio_de_para","qualidade_dados","fn_padronizar","fn_chave","municipios_mt_ibge","bronze_snapshot_diario","silver_snapshot","dim_dre","dim_vinculo","dim_funcao","dim_situacao","dim_tempo","dim_municipio","dim_lotacao","fato_recadastramento","correcoes_municipio"]
+
+ref table vw_resumo_municipio
+ref table vw_evolucao_diaria
+ref table municipio_de_para
+ref table qualidade_dados
+ref table dim_dre
+ref table dim_vinculo
+ref table dim_funcao
+ref table dim_situacao
+ref table dim_tempo
+ref table dim_municipio
+ref table dim_lotacao
+ref table fato_recadastramento
+ref table _Medidas
+
+ref cultureInfo pt-BR
+

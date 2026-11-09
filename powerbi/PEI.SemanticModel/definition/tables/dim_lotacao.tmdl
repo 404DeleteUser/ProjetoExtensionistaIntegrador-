@@ -1,0 +1,58 @@
+/// Dimensao lotacao: chave = lotacao + municipio + DRE, porque um municipio pode ter lotacoes em DREs diferentes (ex.: Cuiaba no Orgao Central e na DRE Metropolitana) e escolas de municipios diferentes podem ter o mesmo nome. Contem a hierarquia DRE > Municipio > Lotacao.
+table dim_lotacao
+	lineageTag: 3781faca-780e-47e9-8649-2496de5717aa
+
+	column dre
+		dataType: string
+		lineageTag: f0f980d3-2b09-4e34-8496-f1ab2e4619f1
+		sourceColumn: dre
+
+	column municipio_oficial
+		dataType: string
+		lineageTag: 6a375cbe-0ec9-4c00-8c2a-e682d1b3d21b
+		sourceColumn: municipio_oficial
+
+	column lotacao
+		dataType: string
+		lineageTag: 9cdb3d13-0075-4142-a41d-3f0506e3ec49
+		sourceColumn: lotacao
+
+	column tipo_lotacao
+		dataType: string
+		lineageTag: dea79b67-09f3-40a2-9f1b-3f240079f709
+		sourceColumn: tipo_lotacao
+
+	column sk_lotacao
+		dataType: int64
+		isHidden
+		lineageTag: 70c1c1a9-da7c-4ae8-9f71-b530f2dafb84
+		summarizeBy: none
+		sourceColumn: sk_lotacao
+
+	/// Drill-down OLAP: DRE, municipio e lotacao (escola).
+	hierarchy 'DRE > Município > Lotação'
+		lineageTag: a38adba0-c1ae-4879-9d59-52de0bf963cc
+
+		level DRE
+			lineageTag: c7eaf0d7-347d-41dd-9717-e3bfffa7b914
+			column: dre
+
+		level Município
+			lineageTag: 3961c0a6-c388-4453-802f-884352af80c9
+			column: municipio_oficial
+
+		level Lotação
+			lineageTag: 16f014af-d0a8-44b5-b29b-694b19ebdeef
+			column: lotacao
+
+	partition dim_lotacao = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Distintos = Table.Distinct(Table.SelectColumns(silver_snapshot, {"dre", "municipio_oficial", "lotacao", "tipo_lotacao"})),
+				    Ordenado = Table.Sort(Distintos, {{"dre", Order.Ascending}, {"municipio_oficial", Order.Ascending}, {"lotacao", Order.Ascending}}),
+				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_lotacao", 1, 1, Int64.Type)
+				in
+				    ChaveSubstituta
+

@@ -1,0 +1,27 @@
+/// Dimensao funcao: chave substituta sk_funcao.
+table dim_funcao
+	lineageTag: 5edd2b20-8ffb-41f1-b905-8e6f55e593d0
+
+	column funcao
+		dataType: string
+		lineageTag: 3bc97fad-2e82-4717-891a-f3507682757e
+		sourceColumn: funcao
+
+	column sk_funcao
+		dataType: int64
+		isHidden
+		lineageTag: f1d73a09-6b07-4378-a728-09e767beec14
+		summarizeBy: none
+		sourceColumn: sk_funcao
+
+	partition dim_funcao = m
+		mode: import
+		queryGroup: Gold
+		source =
+				let
+				    Distintos = Table.Distinct(Table.SelectColumns(silver_snapshot, {"funcao"})),
+				    Ordenado = Table.Sort(Distintos, {{"funcao", Order.Ascending}}),
+				    ChaveSubstituta = Table.AddIndexColumn(Ordenado, "sk_funcao", 1, 1, Int64.Type)
+				in
+				    ChaveSubstituta
+

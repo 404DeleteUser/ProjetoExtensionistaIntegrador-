@@ -1,0 +1,36 @@
+/// Municipios que nao casaram com a lista do IBGE. Para revisao manual (contagem de linhas, sem dados individuais).
+table municipio_de_para
+	isHidden
+	lineageTag: d61facdc-32cf-4980-9784-b3a3ce65f47f
+
+	column dre
+		dataType: string
+		lineageTag: d4795da6-b7fd-40f0-a902-ebef03fbf056
+		sourceColumn: dre
+
+	column municipio
+		dataType: string
+		lineageTag: 846205fc-efb1-4a00-bbe3-7586cf43e575
+		sourceColumn: municipio
+
+	column linhas
+		dataType: int64
+		lineageTag: d209cc83-fd03-435f-93be-0f1ebe1e6942
+		sourceColumn: linhas
+
+	column municipio_ibge_correto
+		dataType: string
+		lineageTag: 0a2fbe53-b318-4b27-9bab-7e985e0a16e1
+		sourceColumn: municipio_ibge_correto
+
+	partition municipio_de_para = m
+		mode: import
+		queryGroup: Silver
+		source =
+				let
+				    SemCodigo = Table.SelectRows(silver_snapshot, each [codigo_ibge] = null),
+				    Agrupado = Table.Group(SemCodigo, {"dre", "municipio"}, {{"linhas", each Table.RowCount(_), Int64.Type}}),
+				    Revisao = Table.AddColumn(Agrupado, "municipio_ibge_correto", each null, type text)
+				in
+				    Revisao
+
