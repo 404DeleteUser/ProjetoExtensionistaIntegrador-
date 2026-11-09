@@ -1,12 +1,12 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.4.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
   "name": "ope_titulo",
   "position": {
     "x": 16,
     "y": 8,
     "z": 0,
-    "width": 600,
     "height": 36,
+    "width": 600,
     "tabOrder": 0
   },
   "visual": {
@@ -19,10 +19,10 @@
               {
                 "textRuns": [
                   {
-                    "value": "Recadastramento SEDUC-MT — Visão operacional",
+                    "value": "Recadastramento — Visão operacional",
                     "textStyle": {
-                      "fontSize": "16pt",
-                      "fontWeight": "bold"
+                      "fontWeight": "bold",
+                      "fontSize": "16pt"
                     }
                   }
                 ]
