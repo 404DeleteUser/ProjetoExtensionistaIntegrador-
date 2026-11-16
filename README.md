@@ -35,6 +35,22 @@ flowchart LR
 | Estratégico | Gestão da SEDUC | Evolução diária, média móvel, projeção e acompanhamento da meta |
 | Perfis de adesão | Gestão da SEDUC | Municípios agrupados por perfil (mineração de dados) e ação sugerida para cada perfil |
 
+### Telas do painel
+
+> Dados agregados e anonimizados (só contagens e percentuais), posição de novembro/2026.
+
+**Gerencial**: cartões por situação, mapa de % concluído por município (faixas de 20%), situação por DRE, tipo de vínculo, tipo de lotação e funções.
+
+![Painel gerencial](docs/img/1794836731360_image.png)
+
+**Operacional**: matriz DRE > Município > Lotação, ordenada pelo menor % concluído.
+
+![Painel operacional](docs/img/1794836734720_image.png)
+
+**Perfis de adesão**: municípios agrupados por K-means e ação sugerida para cada perfil.
+
+![Perfis de adesão](docs/img/1794836742685_image.png)
+
 ## Estrutura do repositório
 
 ```
