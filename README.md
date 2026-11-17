@@ -47,6 +47,10 @@ flowchart LR
 
 ![Painel operacional](docs/img/1794836734720_image.png)
 
+**Estratégico**: evolução diária do % concluído, novos concluídos por dia, média móvel, projeção de conclusão e acompanhamento da meta.
+
+![Painel estratégico](docs/img/1794949140249_image.png)
+
 **Perfis de adesão**: municípios agrupados por K-means e ação sugerida para cada perfil.
 
 ![Perfis de adesão](docs/img/1794836742685_image.png)
