@@ -6,6 +6,11 @@ on:
   schedule:
     - cron: "0 3 * * *"  # 23h em Cuiabá (UTC-4)
   workflow_dispatch:      # botão "Run workflow" para rodar manualmente
+    inputs:
+      forcar_carga:
+        description: "Forçar carga: pula a trava de completude (só se a queda de servidores for real)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -33,3 +38,4 @@ jobs:
           RECADASTRAMENTO_API_TOKEN: ${{ secrets.RECADASTRAMENTO_API_TOKEN }}
           CHAVE_ANONIMIZACAO: ${{ secrets.CHAVE_ANONIMIZACAO }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FORCAR_CARGA: ${{ inputs.forcar_carga && '1' || '0' }}

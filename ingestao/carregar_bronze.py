@@ -31,6 +31,9 @@ COLUNAS = {
 MATRICULA, VINCULO = "Matrícula", "Vínculo"  # só entram no HMAC
 DIAS_DE_RETENCAO = 7
 TEMPO_LIMITE_S = 120
+# Trava de completude: barra uma planilha cortada antes que ela feche o histórico de quem "sumiu".
+LIMITE_QUEDA = 0.10    # bloqueia se o total cair mais de 10% em relação ao último estado
+LIMITE_SUMIDOS = 0.10  # bloqueia se mais de 10% dos servidores do último estado não vierem
 ARQUIVO_ENV = Path(__file__).resolve().parent.parent / ".env"
 
 
@@ -108,7 +111,18 @@ def anonimizar(corpo, chave):
     return list(registros.values()), contagens
 
 
-def gravar(registros, database_url):
+def verificar_completude(ids_anteriores, ids_novos):
+    """Recusa a carga se o total cair ou se sumirem servidores além dos limites. Recebe só códigos HMAC."""
+    if not ids_anteriores:
+        return  # primeira carga: nada a comparar
+    total, sumidos = len(ids_anteriores), len(ids_anteriores - ids_novos)
+    if len(ids_novos) < total * (1 - LIMITE_QUEDA) or sumidos > total * LIMITE_SUMIDOS:
+        raise RuntimeError(
+            f"Carga suspeita: {len(ids_novos)} servidores contra {total} no último estado; "
+            f"{sumidos} sumiram. Nada foi gravado. Se a mudança for real, rode o workflow com 'forçar carga'.")
+
+
+def gravar(registros, database_url, forcar=False):
     """Grava a carga do dia, atualiza o SCD2 e apaga cargas antigas, numa única transação."""
     import psycopg  # só aqui: os testes de anonimização rodam sem banco
 
@@ -116,6 +130,9 @@ def gravar(registros, database_url):
         data = con.execute("SELECT (now() AT TIME ZONE 'America/Cuiaba')::date").fetchone()[0]
         if con.execute("SELECT 1 FROM bronze.carga WHERE data_carga = %s LIMIT 1", (data,)).fetchone():
             return data, None
+        if not forcar:
+            vigentes = con.execute("SELECT id_servidor FROM bronze.historico WHERE valido_ate IS NULL")
+            verificar_completude({linha[0] for linha in vigentes}, {registro[0] for registro in registros})
         colunas = ", ".join(("data_carga", "id_servidor", *COLUNAS))
         with con.cursor().copy(f"COPY bronze.carga ({colunas}) FROM STDIN") as copia:
             for registro in registros:
@@ -142,7 +159,10 @@ def main():
     if not registros:
         # Gravar uma carga vazia fecharia o histórico de todos os servidores.
         sys.exit("Nenhuma linha válida na planilha; nada foi gravado.")
-    data, historico = gravar(registros, database_url)
+    forcar = env.get("FORCAR_CARGA") == "1"
+    if forcar:
+        print("Trava de completude desligada nesta execução (forçar carga).")
+    data, historico = gravar(registros, database_url, forcar)
     if historico is None:
         print(f"{data}: carga do dia já existia; nada foi gravado.")
         return

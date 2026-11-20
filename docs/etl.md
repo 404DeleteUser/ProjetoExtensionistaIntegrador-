@@ -27,6 +27,7 @@ flowchart LR
 | B10 | Cargas com mais de 7 dias são apagadas de `bronze.carga` | O histórico já guarda o necessário |
 | B11 | Carga sem nenhuma linha válida não é gravada | Senão, fecharia o histórico de todos os servidores |
 | B12 | Os logs mostram só contagens | Os logs do GitHub Actions são públicos |
+| B13 | Trava de completude: compara os códigos da carga com os servidores vigentes no histórico e não grava se o total cair mais de 10% ou se mais de 10% sumirem. O botão "Run workflow" tem a opção "forçar carga" para uma queda real | Uma planilha cortada fecharia o histórico de quem não veio, como se tivesse saído |
 
 ## Bronze → extração (`sql/02_extracao.sql`)
 

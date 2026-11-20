@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from carregar_bronze import anonimizar, carregar_env, ler_arquivo
+from carregar_bronze import anonimizar, carregar_env, ler_arquivo, verificar_completude
 
 CABECALHO = ["DRE", "Municipio", "Lotacao", "TipoLotacao", "Nome",
              "Funcao", "TipoVinculo", "Matrícula", "Vínculo", "Situação"]
@@ -59,6 +59,31 @@ class TestAnonimizar(unittest.TestCase):
     def test_falha_se_api_recusar(self):
         with self.assertRaises(RuntimeError):
             anonimizar({"ok": False, "erro": "token inválido"}, CHAVE)
+
+
+class TestVerificarCompletude(unittest.TestCase):
+    ANTERIORES = {f"id{i}" for i in range(1000)}
+
+    def test_carga_igual_passa(self):
+        verificar_completude(self.ANTERIORES, set(self.ANTERIORES))
+
+    def test_variacao_normal_passa(self):
+        # maior variação real observada: ~1,8% saindo num dia, com entradas novas
+        novos = {f"id{i}" for i in range(18, 1000)} | {"novo1", "novo2"}
+        verificar_completude(self.ANTERIORES, novos)
+
+    def test_primeira_carga_passa(self):
+        verificar_completude(set(), {"id1"})
+
+    def test_planilha_cortada_bloqueia(self):
+        with self.assertRaisesRegex(RuntimeError, "Carga suspeita"):
+            verificar_completude(self.ANTERIORES, {f"id{i}" for i in range(300)})
+
+    def test_codigos_trocados_bloqueia(self):
+        # mesmo tamanho, mas 20% dos códigos diferentes (ex.: chave HMAC trocada por engano)
+        novos = {f"id{i}" for i in range(800)} | {f"outro{i}" for i in range(200)}
+        with self.assertRaisesRegex(RuntimeError, "200 sumiram"):
+            verificar_completude(self.ANTERIORES, novos)
 
 
 class TestLerArquivo(unittest.TestCase):
